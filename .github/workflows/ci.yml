@@ -7,10 +7,20 @@ on:
   pull_request:
 
 jobs:
-  build:
+  run-etl:
     runs-on: ubuntu-latest
-
     steps:
+
+      - uses: actions/checkout@v3
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Instalar dependências
+        run: pip install pandas
+      - name: Rodar script ETL
+        run: python etl_vendas.py
+    
       - name: Checkout do código
         uses: actions/checkout@v4
 
