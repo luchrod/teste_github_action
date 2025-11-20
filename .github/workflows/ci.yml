@@ -1,0 +1,56 @@
+name: CI - Validar e Testar
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Validar HTML (existe e contém <html>)
+        run: |
+          FILE="site/index.html"
+          if [ ! -f "$FILE" ]; then
+            echo "ERRO: '$FILE' não encontrado no repositório. Verifique se a pasta 'site/' e o arquivo 'index.html' foram comitados."
+            echo "Arquivos no diretório atual:"
+            ls -la
+            echo "Arquivos no diretório site/:"
+            ls -la site || true
+            exit 1
+          fi
+
+          if ! grep -i -q "<html" "$FILE"; then
+            echo "ERRO: '$FILE' parece não conter uma tag <html> válida."
+            echo "Conteúdo (primeiras 50 linhas):"
+            sed -n '1,50p' "$FILE"
+            exit 1
+          fi
+          echo "HTML validado com sucesso."
+
+      - name: Teste simples
+        run: |
+          echo "Rodando teste básico..."
+          if [ ! -f "site/index.html" ]; then
+            echo "Arquivo index.html não encontrado!"
+            exit 1
+          fi
+          echo "Teste finalizado com sucesso."
+
+      - name: Criar artefato do site
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          cp -R site/* dist/
+
+      - name: Upload do artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: dist
