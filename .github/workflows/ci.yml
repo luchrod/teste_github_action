@@ -14,13 +14,25 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Validar HTML
+      - name: Validar HTML (existe e contém <html>)
         run: |
-          if ! grep -q "<html" site/index.html; then
-            echo "Arquivo HTML inválido!"
+          FILE="site/index.html"
+          if [ ! -f "$FILE" ]; then
+            echo "ERRO: '$FILE' não encontrado no repositório. Verifique se a pasta 'site/' e o arquivo 'index.html' foram comitados."
+            echo "Arquivos no diretório atual:"
+            ls -la
+            echo "Arquivos no diretório site/:"
+            ls -la site || true
             exit 1
           fi
-          echo "HTML Validado com sucesso."
+
+          if ! grep -i -q "<html" "$FILE"; then
+            echo "ERRO: '$FILE' parece não conter uma tag <html> válida."
+            echo "Conteúdo (primeiras 50 linhas):"
+            sed -n '1,50p' "$FILE"
+            exit 1
+          fi
+          echo "HTML validado com sucesso."
 
       - name: Teste simples
         run: |
@@ -33,7 +45,8 @@ jobs:
 
       - name: Criar artefato do site
         run: |
-          mkdir dist
+          rm -rf dist
+          mkdir -p dist
           cp -R site/* dist/
 
       - name: Upload do artefato
